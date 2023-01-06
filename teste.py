@@ -8,6 +8,11 @@ def tanh(x):
 def tanh_derivative(x):
   return 1 - np.tanh(x)**2
 
+act_func_s = 'tanh'
+act_func = tanh
+
+np.random.seed(666)
+
 class MultiClassClassificationNetwork:
   def __init__(self, input_size, output_size):
     self.input_size = input_size
@@ -18,8 +23,8 @@ class MultiClassClassificationNetwork:
 
   def forward(self, inputs):
     self.inputs = inputs
-    self.hidden_layer = tanh(np.dot(inputs, self.weights1))
-    self.output = tanh(np.dot(self.hidden_layer, self.weights2))
+    self.hidden_layer = act_func(np.dot(inputs, self.weights1))
+    self.output = act_func(np.dot(self.hidden_layer, self.weights2))
     return self.output
 
   def backward(self, targets):
@@ -40,7 +45,7 @@ classifier = MultiClassClassificationNetwork(6, 5)
 # Loading training data
 data = pd.read_csv('treinamento.csv')
 # Shuffling the data
-data = data.sample(frac=1).reset_index(drop=True)
+data = data.sample(frac=1, random_state=666).reset_index(drop=True)
 #print(data)
 # The last column is the target
 X = data.iloc[:, :-1].values
