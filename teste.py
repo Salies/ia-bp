@@ -8,8 +8,20 @@ def tanh(x):
 def tanh_derivative(x):
   return 1 - np.tanh(x)**2
 
-act_func_s = 'tanh'
-act_func = tanh
+def logistic(x):
+  return 1 / (1 + np.exp(-x))
+
+def logistic_derivative(x):
+  return logistic(x) * (1 - logistic(x))
+
+act_func_s = 'logistic'
+
+if act_func_s == 'tanh':
+  act_func = tanh
+  act_func_derivative = tanh_derivative
+elif act_func_s == 'logistic':
+  act_func = logistic
+  act_func_derivative = logistic_derivative
 
 np.random.seed(666)
 
@@ -29,9 +41,9 @@ class MultiClassClassificationNetwork:
 
   def backward(self, targets):
     self.errors = targets - self.output
-    self.output_deltas = self.errors * tanh_derivative(self.output)
+    self.output_deltas = self.errors * act_func_derivative(self.output)
     self.errors_hidden = self.output_deltas.dot(self.weights2.T)
-    self.hidden_deltas = self.errors_hidden * tanh_derivative(self.hidden_layer)
+    self.hidden_deltas = self.errors_hidden * act_func_derivative(self.hidden_layer)
     self.weights2 += self.hidden_layer.T.dot(self.output_deltas)
     self.weights1 += self.inputs.T.dot(self.hidden_deltas)
 
@@ -53,7 +65,8 @@ y_data = data.iloc[:, -1].values
 y = []
 # The logic is: if the target is 1, the output should be [1, -1, -1, -1, -1]
 # if the target is 2, the output should be [-1, 1, -1, -1, -1], etc.
-for i in range(len(y_data)):
+if act_func_s == 'tanh':
+  for i in range(len(y_data)):
     if y_data[i] == 1:
         y.append([1, -1, -1, -1, -1])
     elif y_data[i] == 2:
@@ -64,6 +77,18 @@ for i in range(len(y_data)):
         y.append([-1, -1, -1, 1, -1])
     elif y_data[i] == 5:
         y.append([-1, -1, -1, -1, 1])
+elif act_func_s == 'logistic':
+  for i in range(len(y_data)):
+    if y_data[i] == 1:
+        y.append([1, 0, 0, 0, 0])
+    elif y_data[i] == 2:
+        y.append([0, 1, 0, 0, 0])
+    elif y_data[i] == 3:
+        y.append([0, 0, 1, 0, 0])
+    elif y_data[i] == 4:
+        y.append([0, 0, 0, 1, 0])
+    elif y_data[i] == 5:
+        y.append([0, 0, 0, 0, 1])
 
 y = np.array(y)
 
