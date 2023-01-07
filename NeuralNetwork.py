@@ -3,28 +3,11 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix
 from utils import *
 
-# Prepara the targets for the neural network
-# The logic is: if the target is 1, the output should be [1, 0, 0, 0, 0]
-def prepare_targets(targets, act_func):
-    n = targets.shape[0]
-    # Doing this in a smarth way
-    # First, we create a matrix with the same number of rows as the targets, but with 5 columns
-    # Then, we fill the matrix with 0
-    # Finally, we replace the column that corresponds to the target with 1
-    # For example, if the target is 3, we replace the 3rd column with 1, etc.
-    targets_matrix = np.zeros((n, 5))
-    # The targets are 1-indexed, so we need to subtract 1 to get the correct column
-    targets_matrix[np.arange(n), targets - 1] = 1
-    # If the activation function is tanh, we need to change the 0s to -1s
-    if act_func == 'tanh':
-        targets_matrix[targets_matrix == 0] = -1
-    return targets_matrix
-
 SEED = 666
 
 np.random.seed(SEED)
 
-class MultiClassClassificationNetwork:
+class NeuralNetwork:
     def __init__(self, data_path, stop_criteria = 'epochs', act_func = 'tanh', n_hidden = None):
         data = pd.read_csv(data_path)
         # Embaralha os dados para que o treinamento seja mais eficiente.
@@ -85,7 +68,7 @@ class MultiClassClassificationNetwork:
         cm = confusion_matrix(targets, predictions)
         return cm
 
-classifier = MultiClassClassificationNetwork('data/treinamento.csv')
+classifier = NeuralNetwork('data/treinamento.csv')
 
 classifier.train(1000)
 
