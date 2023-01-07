@@ -18,14 +18,6 @@ def logistic(x):
 
 def logistic_derivative(x):
   return logistic(x) * (1 - logistic(x))
-'''act_func_s = 'logistic'
-
-if act_func_s == 'tanh':
-  act_func = tanh
-  act_func_derivative = tanh_derivative
-elif act_func_s == 'logistic':
-  act_func = logistic
-  act_func_derivative = logistic_derivative'''
 
 # Prepara the targets for the neural network
 # The logic is: if the target is 1, the output should be [1, 0, 0, 0, 0]
@@ -57,11 +49,11 @@ class MultiClassClassificationNetwork:
         self.targets = prepare_targets(self.targets, act_func)
         self.inputs = data.iloc[:, :-1].values
         self.input_size = self.inputs.shape[1]
-        self.hidden_layers = n_hidden
-        if self.hidden_layers is None:
-            self.hidden_layers = int(np.sqrt(self.input_size*self.output_size))
-        self.weights1 = np.random.rand(self.input_size, self.hidden_layers)
-        self.weights2 = np.random.rand(self.hidden_layers, self.output_size)
+        self.n_hidden_layers = n_hidden
+        if self.n_hidden_layers is None:
+            self.n_hidden_layers = int(np.sqrt(self.input_size*self.output_size))
+        self.weights1 = np.random.rand(self.input_size, self.n_hidden_layers)
+        self.weights2 = np.random.rand(self.n_hidden_layers, self.output_size)
 
         if act_func == 'tanh':
             self.act_func = tanh
@@ -71,22 +63,22 @@ class MultiClassClassificationNetwork:
             self.act_func_derivative = logistic_derivative
 
     def forward(self, inputs):
-        self.hidden_layer = self.act_func(np.dot(inputs, self.weights1))
-        self.output = self.act_func(np.dot(self.hidden_layer, self.weights2))
+        self.hidden_layers = self.act_func(np.dot(inputs, self.weights1))
+        self.output = self.act_func(np.dot(self.hidden_layers, self.weights2))
         return self.output
 
-    def backward(self):
+    def __backward(self):
         self.errors = self.targets - self.output
         self.output_deltas = self.errors * self.act_func_derivative(self.output)
         self.errors_hidden = self.output_deltas.dot(self.weights2.T)
-        self.hidden_deltas = self.errors_hidden * self.act_func_derivative(self.hidden_layer)
-        self.weights2 += self.hidden_layer.T.dot(self.output_deltas)
+        self.hidden_deltas = self.errors_hidden * self.act_func_derivative(self.hidden_layers)
+        self.weights2 += self.hidden_layers.T.dot(self.output_deltas)
         self.weights1 += self.inputs.T.dot(self.hidden_deltas)
 
     def train(self, epochs):
         for _ in range(epochs):
             self.forward(self.inputs)
-            self.backward()
+            self.__backward()
 
     def test(self, data_path):
         data = pd.read_csv(data_path)
