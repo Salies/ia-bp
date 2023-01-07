@@ -1,7 +1,11 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
+# Usando a função logística do scipy pois se eu tentar
+# fazer na mão, dá overflow.
 from scipy.special import expit
+
+SEED = 666
 
 def tanh(x):
   return np.tanh(x)
@@ -40,38 +44,52 @@ def prepare_targets(targets):
         targets_matrix[targets_matrix == 0] = -1
     return targets_matrix
 
-np.random.seed(666)
+np.random.seed(SEED)
 
 class MultiClassClassificationNetwork:
-  def __init__(self, input_size, output_size):
-    self.input_size = input_size
-    self.output_size = output_size
-    self.hidden_layers = int(np.sqrt(input_size*output_size))
-    self.weights1 = np.random.rand(self.input_size, self.hidden_layers)
-    self.weights2 = np.random.rand(self.hidden_layers, self.output_size)
+    def __init__(self):
+        pass
 
-  def forward(self, inputs):
-    self.inputs = inputs
-    self.hidden_layer = act_func(np.dot(inputs, self.weights1))
-    self.output = act_func(np.dot(self.hidden_layer, self.weights2))
-    return self.output
+    def set_data(self, data_path):
+        data = pd.read_csv(data_path)
+        # Embaralha os dados para que o treinamento seja mais eficiente.
+        data = data.sample(frac=1, random_state=SEED).reset_index(drop=True)
+        # A última coluna é o target
+        self.targets = data.iloc[:, -1].values.astype(int)
+        self.output_size = len(np.unique(self.targets))
+        self.targets = prepare_targets(self.targets)
+        self.inputs = data.iloc[:, :-1].values
+        self.input_size = self.inputs.shape[1]
+        self.hidden_layers = int(np.sqrt(self.input_size*self.output_size))
+        self.__init_weights()
 
-  def backward(self, targets):
-    self.errors = targets - self.output
-    self.output_deltas = self.errors * act_func_derivative(self.output)
-    self.errors_hidden = self.output_deltas.dot(self.weights2.T)
-    self.hidden_deltas = self.errors_hidden * act_func_derivative(self.hidden_layer)
-    self.weights2 += self.hidden_layer.T.dot(self.output_deltas)
-    self.weights1 += self.inputs.T.dot(self.hidden_deltas)
+    def __init_weights(self):
+        self.weights1 = np.random.rand(self.input_size, self.hidden_layers)
+        self.weights2 = np.random.rand(self.hidden_layers, self.output_size)
 
-  def train(self, inputs, targets, epochs):
-    for _ in range(epochs):
-      self.forward(inputs)
-      self.backward(targets)
+    def forward(self, inputs):
+        self.hidden_layer = act_func(np.dot(inputs, self.weights1))
+        self.output = act_func(np.dot(self.hidden_layer, self.weights2))
+        return self.output
 
-classifier = MultiClassClassificationNetwork(6, 5)
+    def backward(self):
+        self.errors = self.targets - self.output
+        self.output_deltas = self.errors * act_func_derivative(self.output)
+        self.errors_hidden = self.output_deltas.dot(self.weights2.T)
+        self.hidden_deltas = self.errors_hidden * act_func_derivative(self.hidden_layer)
+        self.weights2 += self.hidden_layer.T.dot(self.output_deltas)
+        self.weights1 += self.inputs.T.dot(self.hidden_deltas)
 
-# Loading training data
+    def train(self, epochs):
+        for _ in range(epochs):
+            self.forward(self.inputs)
+            self.backward()
+
+#classifier = MultiClassClassificationNetwork(6, 5)
+
+classifier = MultiClassClassificationNetwork()
+
+'''# Loading training data
 data = pd.read_csv('data/treinamento.csv')
 # Shuffling the data
 data = data.sample(frac=1, random_state=666).reset_index(drop=True)
@@ -82,7 +100,10 @@ y_data = data.iloc[:, -1].values.astype(int)
 y = prepare_targets(y_data)
 
 # Training the model
-classifier.train(X, y, 1000)
+classifier.train(X, y, 1000)'''
+
+classifier.set_data('data/treinamento.csv')
+classifier.train(1000)
 
 # Loading test data
 data = pd.read_csv('data/teste.csv')
