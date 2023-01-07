@@ -19,6 +19,10 @@ def logistic(x):
 def logistic_derivative(x):
   return logistic(x) * (1 - logistic(x))
 
+# Error function is half squared error
+def error_function(targets, outputs):
+    return np.sum((targets - outputs)**2) / 2
+
 # Prepara the targets for the neural network
 # The logic is: if the target is 1, the output should be [1, 0, 0, 0, 0]
 def prepare_targets(targets, act_func):
@@ -39,7 +43,7 @@ def prepare_targets(targets, act_func):
 np.random.seed(SEED)
 
 class MultiClassClassificationNetwork:
-    def __init__(self, data_path, act_func = 'tanh', n_hidden = None):
+    def __init__(self, data_path, stop_criteria = 'epochs', act_func = 'tanh', n_hidden = None):
         data = pd.read_csv(data_path)
         # Embaralha os dados para que o treinamento seja mais eficiente.
         data = data.sample(frac=1, random_state=SEED).reset_index(drop=True)
@@ -54,6 +58,8 @@ class MultiClassClassificationNetwork:
             self.n_hidden_layers = int(np.sqrt(self.input_size*self.output_size))
         self.weights1 = np.random.rand(self.input_size, self.n_hidden_layers)
         self.weights2 = np.random.rand(self.n_hidden_layers, self.output_size)
+
+        self.stop_criteria = stop_criteria
 
         if act_func == 'tanh':
             self.act_func = tanh
@@ -75,10 +81,17 @@ class MultiClassClassificationNetwork:
         self.weights2 += self.hidden_layers.T.dot(self.output_deltas)
         self.weights1 += self.inputs.T.dot(self.hidden_deltas)
 
-    def train(self, epochs):
-        for _ in range(epochs):
-            self.forward(self.inputs)
-            self.__backward()
+    def train(self, stop_value):
+        if self.stop_criteria == 'epochs':
+            for _ in range(stop_value):
+                self.forward(self.inputs)
+                self.__backward()
+        elif self.stop_criteria == 'error':
+            error = error_function(self.targets, self.forward(self.inputs))
+            while error > stop_value:
+                self.forward(self.inputs)
+                self.__backward()
+                error = error_function(self.targets, self.output)
 
     def test(self, data_path):
         data = pd.read_csv(data_path)
