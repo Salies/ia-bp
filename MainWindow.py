@@ -1,7 +1,7 @@
 # PySide6 main window example
 
 import sys
-from PySide6.QtWidgets import QVBoxLayout, QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, QRadioButton
+from PySide6.QtWidgets import QVBoxLayout, QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, QRadioButton, QDoubleSpinBox, QGridLayout
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import QUrl
 
@@ -13,13 +13,14 @@ class MainWindow(QMainWindow):
         self.centralLayout = QVBoxLayout()
         self.createTrainingUpload()
         self.createTrainingTransFunction()
+        self.createTrainingParameters()
         self.centralWidget.setLayout(self.centralLayout)
         self.setCentralWidget(self.centralWidget)
 
     def createTrainingUpload(self):
         # Criando os componentes base
-        trainingGroup = QGroupBox("Arquivo de treinamento")
-        trainingLayout = QVBoxLayout(trainingGroup)
+        self.trainingUploadGroup = QGroupBox("Arquivo de treinamento")
+        trainingLayout = QVBoxLayout(self.trainingUploadGroup)
 
         # Botão para abrir o arquivo de treinamento
         self.openTrainingFileButton = QPushButton("Abrir arquivo de treinamento")
@@ -49,12 +50,11 @@ class MainWindow(QMainWindow):
         trainingLayout.addWidget(self.openTrainingFileButton)
         trainingLayout.addWidget(self.neuronsLabel)
         trainingLayout.addLayout(hiddenLayersLayout)
-        self.centralLayout.addWidget(trainingGroup)
+        self.centralLayout.addWidget(self.trainingUploadGroup)
 
     def createTrainingTransFunction(self):
-        # Criando os componentes base
-        trainingGroup = QGroupBox("Função de transferência")
-        trainingLayout = QVBoxLayout(trainingGroup)
+        self.trainingTransFunctionGroup = QGroupBox("Função de transferência")
+        trainingLayout = QVBoxLayout(self.trainingTransFunctionGroup)
 
         # Cria as opções
         logisticButton = QRadioButton("Logística")
@@ -66,7 +66,39 @@ class MainWindow(QMainWindow):
         trainingLayout.addWidget(tanhButton)
 
         # Retornando
-        self.centralLayout.addWidget(trainingGroup)
+        self.centralLayout.addWidget(self.trainingTransFunctionGroup)
+
+    def createTrainingParameters(self):
+        # Criando os componentes base
+        self.trainingParametersGroup = QGroupBox("Treinamento")
+        trainingLayout = QGridLayout(self.trainingParametersGroup)
+
+        errMaxRadio = QRadioButton("Erro máximo:")
+        nItRadio = QRadioButton("Número de iterações:")
+        errMaxRadio.setChecked(True)
+
+        self.errMaxInput = QDoubleSpinBox()
+        self.errMaxInput.setMinimum(0.0)
+        self.errMaxInput.setMaximum(100.0)
+        self.errMaxInput.setValue(0.01)
+
+        self.nItInput = QSpinBox()
+        self.nItInput.setMinimum(0)
+        self.nItInput.setMaximum(100000)
+        self.nItInput.setValue(1000)
+
+        trainingLayout.addWidget(errMaxRadio, 0, 0)
+        trainingLayout.addWidget(self.errMaxInput, 0, 1)
+        trainingLayout.addWidget(nItRadio, 1, 0)
+        trainingLayout.addWidget(self.nItInput, 1, 1)
+
+        # Botão para iniciar o treinamento
+        self.startTrainingButton = QPushButton("Treinar")
+        self.startTrainingButton.clicked.connect(self.startTraining)
+        trainingLayout.addWidget(self.startTrainingButton, 2, 0, 1, 2)
+
+        # Retornando
+        self.centralLayout.addWidget(self.trainingParametersGroup)
 
     def openFile(self, title):
         # Abrindo o arquivo de treinamento
@@ -83,3 +115,6 @@ class MainWindow(QMainWindow):
             self.trainingFile = file
             self.trainingFileLabel.setText(fileName)
             return
+
+    def startTraining(self):
+        print('treinando')
