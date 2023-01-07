@@ -1,4 +1,8 @@
-from PySide6.QtWidgets import QTableWidgetItem, QTableWidget, QMessageBox, QVBoxLayout, QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, QRadioButton, QDoubleSpinBox, QGridLayout
+from PySide6.QtWidgets import (
+    QAbstractItemView, QHeaderView, QTableWidgetItem, QTableWidget, QMessageBox, QVBoxLayout, 
+    QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, 
+    QRadioButton, QDoubleSpinBox, QGridLayout
+)
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import QUrl
 from data_utils import import_data
@@ -175,6 +179,11 @@ class MainWindow(QMainWindow):
 
         # Criando a tabela para a matriz de confusão
         self.confusionMatrixTable = QTableWidget()
+        # Tamanho automático
+        self.confusionMatrixTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.confusionMatrixTable.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # Desabilitando edição
+        self.confusionMatrixTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         # Criando o botão para iniciar o teste
         self.startTestButton = QPushButton("Testar")
