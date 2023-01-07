@@ -1,7 +1,7 @@
 # PySide6 main window example
 
 import sys
-from PySide6.QtWidgets import QVBoxLayout, QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, QRadioButton, QDoubleSpinBox, QGridLayout
+from PySide6.QtWidgets import QMessageBox, QVBoxLayout, QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, QRadioButton, QDoubleSpinBox, QGridLayout
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import QUrl
 
@@ -117,4 +117,18 @@ class MainWindow(QMainWindow):
             return
 
     def startTraining(self):
-        print('treinando')
+        if(not hasattr(self, 'trainingFile') or self.trainingFile == ""):
+            QMessageBox.critical(self, "Erro", "Nenhum arquivo de treinamento selecionado.")
+            return
+
+        transFunction = ['logistic', 'tanh']
+        stopCriteria = ['error', 'epochs']
+
+        # index of checked button
+        checkedTransFunction = [button.isChecked() for button in self.trainingTransFunctionGroup.findChildren(QRadioButton)].index(True)
+        checkedStopCriteria = [button.isChecked() for button in self.trainingParametersGroup.findChildren(QRadioButton)].index(True)
+
+        print()
+        print(transFunction[checkedTransFunction])
+        print(stopCriteria[checkedStopCriteria])
+        print()
