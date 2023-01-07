@@ -67,10 +67,3 @@ class NeuralNetwork:
         predictions = np.argmax(predictions, axis=1) + 1
         cm = confusion_matrix(targets, predictions)
         return cm
-
-classifier = NeuralNetwork('data/treinamento.csv')
-
-classifier.train(1000)
-
-cm = classifier.test('data/teste.csv')
-print(cm)
