@@ -47,10 +47,7 @@ def prepare_targets(targets):
 np.random.seed(SEED)
 
 class MultiClassClassificationNetwork:
-    def __init__(self):
-        pass
-
-    def set_data(self, data_path):
+    def __init__(self, data_path, n_hidden = None):
         data = pd.read_csv(data_path)
         # Embaralha os dados para que o treinamento seja mais eficiente.
         data = data.sample(frac=1, random_state=SEED).reset_index(drop=True)
@@ -60,10 +57,9 @@ class MultiClassClassificationNetwork:
         self.targets = prepare_targets(self.targets)
         self.inputs = data.iloc[:, :-1].values
         self.input_size = self.inputs.shape[1]
-        self.hidden_layers = int(np.sqrt(self.input_size*self.output_size))
-        self.__init_weights()
-
-    def __init_weights(self):
+        self.hidden_layers = n_hidden
+        if self.hidden_layers is None:
+            self.hidden_layers = int(np.sqrt(self.input_size*self.output_size))
         self.weights1 = np.random.rand(self.input_size, self.hidden_layers)
         self.weights2 = np.random.rand(self.hidden_layers, self.output_size)
 
@@ -95,9 +91,8 @@ class MultiClassClassificationNetwork:
         cm = confusion_matrix(targets, predictions)
         return cm
 
-classifier = MultiClassClassificationNetwork()
+classifier = MultiClassClassificationNetwork('data/treinamento.csv')
 
-classifier.set_data('data/treinamento.csv')
 classifier.train(1000)
 
 cm = classifier.test('data/teste.csv')
