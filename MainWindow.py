@@ -12,6 +12,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Projeto Rede Neural Backpropagation")
+        self.setWindowIcon(QIcon("ico/jackfrost.ico"))
         self.centralWidget = QWidget(self)
         self.centralLayout = QVBoxLayout()
         self.createTrainingUpload()
