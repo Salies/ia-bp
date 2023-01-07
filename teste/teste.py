@@ -104,6 +104,8 @@ y_test = data.iloc[:, -1].values
 # Predicting the test set results
 y_pred = classifier.forward(X_test)
 
+print(y_pred)
+
 pred = np.argmax(y_pred, axis=1) + 1
 
 # Making the Confusion Matrix

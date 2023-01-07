@@ -1,133 +1,112 @@
-from functions import *
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
+from scipy.special import expit
 
-# Uma seed para as coisas aleatórias deste trabalho,
-# assim os testes serão consistentes. Lembrando que uma seed fixa
-# não faz com que os resultados deixem de ser aleatórios.
-SEED = 666
+def tanh(x):
+  return np.tanh(x)
 
-# Classe para a rede neural do trabalho.
-# Mais especificamente, trata-se de uma rede neural classificadora
-# multiclasse e multicamada.
+def tanh_derivative(x):
+  return 1 - np.tanh(x)**2
 
-class NeuralNetwork:
-    # Construtor da classe. A função de ativação pode ser passada para ela.
-    # Por padrão, é a tangente hiperbólica.
-    def __init__(self, a_fun='tanh'):
-        self.set_a_fun(a_fun)
+def logistic(x):
+  return expit(x)
 
-    # Função para preparar os targets de acordo com a função de ativação.
-    # Por exemplo, se a classe for 1 e função logística, 
-    # o target será [1, 0, 0, 0, 0]. Se fosse tanh, seria [1, -1, -1, -1, -1].
-    def __prepare_targets(self, targets):
-        # Fazendo isso de um jeito "esperto".
-        # Primeiro criamos uma matriz de zeros com o número de colunas igual
-        # ao número de saídas e o número de linhas igual ao tamanho do dataset.
-        targets_matrix = np.zeros((len(targets), self.output_size)).astype(int)
-        # Agora, para cada linha da matriz, setamos o valor da coluna [classe - 1] como 1.
-        targets_matrix[np.arange(len(targets)), targets - 1] = 1
-        # Se a função de ativação for tanh, setamos tudo o que for 0 como -1.
-        if self.a_fun == tanh:
-            targets_matrix[targets_matrix == 0] = -1
-        # Caso contrário, basta retornar.
-        return targets_matrix
+def logistic_derivative(x):
+  return logistic(x) * (1 - logistic(x))
 
-    # Método para entrar com os dados de treinamento.
-    # O método detecta o número de neurônios de entrada e de saída,
-    # e estima o número de neurônios da camada oculta, mas este
-    # pode ser alterado manualmente, como manda o enunciado.
-    def set_data(self, path):
-        data = pd.read_csv(path)
-        # As classes são a última coluna do dataset.
-        # Chama-se as classes de targets utilizando linguajar comum
-        # de redes neurais. Ex.: https://www.deeplearningbook.org/contents/mlp.html
-        targets = data.iloc[:, -1]
-        # As entradas são todas as colunas exceto a última.
-        self.inputs = data.iloc[:, :-1]
-        # Salva os tamanhos
-        self.input_size = self.inputs.shape[1]
-        self.output_size = len(targets.unique())
-        # Prepara os targets de acordo com a função de ativação.
-        self.targets = self.__prepare_targets(targets)
-        # Estima o número de neurônios da camada oculta
-        self.n_hidden_layers = int(np.sqrt(self.input_size*self.output_size))
-        # Inicializa os pesos.
-        self.__init_weights()
+act_func_s = 'logistic'
 
-    # Função para inicializar os pesos aleatoriamente.
-    def __init_weights(self):
-        self.output_layer_weights = np.random.rand(self.input_size, self.hidden_layers)
-        self.hidden_layer_weights = np.random.rand(self.hidden_layers, self.output_size)
+if act_func_s == 'tanh':
+  act_func = tanh
+  act_func_derivative = tanh_derivative
+elif act_func_s == 'logistic':
+  act_func = logistic
+  act_func_derivative = logistic_derivative
 
-    # Função para alterar o número de neurônios da camada oculta, caso
-    # o usuário deseje.
-    def set_hidden_layers(self, n):
-        self.hidden_layers = n
-        # Re-inicializa os pesos.
-        self.__init_weights()
+np.random.seed(666)
 
-    # Funções de treinamento.
-    # Propara os resultados da função de ativação para frente.
-    def __forward(self):
-        self.hidden_layers = self.a_fun(np.dot(self.inputs, self.output_layer_weights))
-        self.outputs = self.a_fun(np.dot(self.hidden_layers, self.hidden_layer_weights))
+class MultiClassClassificationNetwork:
+  def __init__(self, input_size, output_size):
+    self.input_size = input_size
+    self.output_size = output_size
+    self.hidden_layers = int(np.sqrt(input_size*output_size))
+    self.weights1 = np.random.rand(self.input_size, self.hidden_layers)
+    self.weights2 = np.random.rand(self.hidden_layers, self.output_size)
 
-    # Backpropagation.
-    def __backward(self):
-        errors = self.targets - self.output
-        output_deltas = errors * self.a_fun_d(self.output)
-        errors_hidden = output_deltas.dot(self.hidden_layer_weights.T)
-        hidden_deltas = errors_hidden * self.a_fun_d(self.hidden_layers)
-        self.hidden_layer_weights += self.hidden_layers.T.dot(output_deltas)
-        self.output_layer_weights += self.inputs.T.dot(hidden_deltas)
+  def forward(self, inputs):
+    self.inputs = inputs
+    self.hidden_layer = act_func(np.dot(inputs, self.weights1))
+    self.output = act_func(np.dot(self.hidden_layer, self.weights2))
+    return self.output
 
-    # Função para calcular o erro da rede.
-    def __error(self):
-        return np.sum(np.square(self.targets - self.output))/2
+  def backward(self, targets):
+    self.errors = targets - self.output
+    self.output_deltas = self.errors * act_func_derivative(self.output)
+    self.errors_hidden = self.output_deltas.dot(self.weights2.T)
+    self.hidden_deltas = self.errors_hidden * act_func_derivative(self.hidden_layer)
+    self.weights2 += self.hidden_layer.T.dot(self.output_deltas)
+    self.weights1 += self.inputs.T.dot(self.hidden_deltas)
 
-    def train(self, stop_criteria = 'epochs', epochs=1000, min_error=0.01):
-        if stop_criteria == 'epochs':
-            for _ in range(epochs):
-                self.__forward()
-                self.__backward()
-            return
-        
-        if stop_criteria == 'error':
-            error = self.__error()
-            while error > min_error:
-                self.__forward()
-                self.__backward()
-                error = self.__error()
-            return
+  def train(self, inputs, targets, epochs):
+    for _ in range(epochs):
+      self.forward(inputs)
+      self.backward(targets)
 
-    # Função de teste, dado um dataset de teste.
-    def test(self, path):
-        data = pd.read_csv(path)
-        targets = data.iloc[:, -1]
-        inputs = data.iloc[:, :-1]
-        # Para aproveitar a função de forward, salvamos os valores de entrada.
-        old_inputs = self.inputs
-        self.inputs = inputs
-        res = self.__forward()
-        # Restauramos os valores de entrada.
-        self.inputs = old_inputs
-        # Com o resultado salvo, retornamos uma matriz de confusão.
-        # Antes, precisamos formatar o resultado para que ele seja compatível
-        # com a coluna de classes do arquivo de teste.
-        res = np.argmax(res, axis=1) + 1
-        return confusion_matrix(targets, res)
+classifier = MultiClassClassificationNetwork(6, 5)
 
-    # Outras funções de set para o usuário.
-    # Definir a função de ativação.
-    def set_a_fun(self, a_fun):
-        if a_fun == 'logistic':
-            self.a_fun = logistic
-            self.a_fun_d = logistic_derivative
-        elif a_fun == 'tanh':
-            self.a_fun = tanh
-            self.a_fun_d = tanh_derivative
+# Loading training data
+data = pd.read_csv('data/treinamento.csv')
+# Shuffling the data
+data = data.sample(frac=1, random_state=666).reset_index(drop=True)
+# The last column is the target
+X = data.iloc[:, :-1].values
+y_data = data.iloc[:, -1].values
+y = []
+# The logic is: if the target is 1, the output should be [1, -1, -1, -1, -1]
+# if the target is 2, the output should be [-1, 1, -1, -1, -1], etc.
+if act_func_s == 'tanh':
+  for i in range(len(y_data)):
+    if y_data[i] == 1:
+        y.append([1, -1, -1, -1, -1])
+    elif y_data[i] == 2:
+        y.append([-1, 1, -1, -1, -1])
+    elif y_data[i] == 3:
+        y.append([-1, -1, 1, -1, -1])
+    elif y_data[i] == 4:
+        y.append([-1, -1, -1, 1, -1])
+    elif y_data[i] == 5:
+        y.append([-1, -1, -1, -1, 1])
+elif act_func_s == 'logistic':
+  for i in range(len(y_data)):
+    if y_data[i] == 1:
+        y.append([1, 0, 0, 0, 0])
+    elif y_data[i] == 2:
+        y.append([0, 1, 0, 0, 0])
+    elif y_data[i] == 3:
+        y.append([0, 0, 1, 0, 0])
+    elif y_data[i] == 4:
+        y.append([0, 0, 0, 1, 0])
+    elif y_data[i] == 5:
+        y.append([0, 0, 0, 0, 1])
 
-t = NeuralNetwork('logistic')
-t.set_data('data/treinamento.csv')
+y = np.array(y)
+
+# Training the model
+classifier.train(X, y, 1000)
+
+# Loading test data
+data = pd.read_csv('data/teste.csv')
+# The last column is the target
+X_test = data.iloc[:, :-1].values
+y_test = data.iloc[:, -1].values
+
+# Predicting the test set results
+y_pred = classifier.forward(X_test)
+
+pred = np.argmax(y_pred, axis=1) + 1
+
+# Making the Confusion Matrix
+cm = confusion_matrix(y_test, pred)
+
+print(cm)
