@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QMessageBox, QVBoxLayout, QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, QRadioButton, QDoubleSpinBox, QGridLayout
+from PySide6.QtWidgets import QTableWidgetItem, QTableWidget, QMessageBox, QVBoxLayout, QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, QRadioButton, QDoubleSpinBox, QGridLayout
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import QUrl
 from data_utils import import_data
+from NeuralNetwork import NeuralNetwork
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -12,6 +13,7 @@ class MainWindow(QMainWindow):
         self.createTrainingUpload()
         self.createTrainingTransFunction()
         self.createTrainingParameters()
+        self.createTestArea()
         self.centralWidget.setLayout(self.centralLayout)
         self.setCentralWidget(self.centralWidget)
 
@@ -27,6 +29,7 @@ class MainWindow(QMainWindow):
 
         # Label informando o arquivo selecionado
         self.trainingFileLabel = QLabel("Nenhum arquivo selecionado")
+        self.trainingFileLabel.setWordWrap(True)
 
         # Label para indicar o número de neurônios na camada de entrada e saída
         self.neuronsLabel = QLabel()
@@ -120,21 +123,89 @@ class MainWindow(QMainWindow):
             self.hiddenLayersInput.setValue(self.trainingData[4])
             return
 
+        self.testFilePath = file[0]
+        self.testFileLabel.setText(fileName)
+
     def startTraining(self):
         if(not hasattr(self, 'trainingData')):
             QMessageBox.critical(self, "Erro!", "Nenhum arquivo de treinamento selecionado.")
             return
 
-        transFunction = ['logistic', 'tanh']
-        stopCriteria = ['error', 'epochs']
+        transFunctions = ['logistic', 'tanh']
+        stopCriterias = ['error', 'epochs']
 
-        # index of checked button
+        # Pega a função e o critério de parada selecionados
         checkedTransFunction = [button.isChecked() for button in self.trainingTransFunctionGroup.findChildren(QRadioButton)].index(True)
         checkedStopCriteria = [button.isChecked() for button in self.trainingParametersGroup.findChildren(QRadioButton)].index(True)
 
-        print()
-        print(transFunction[checkedTransFunction])
-        print(stopCriteria[checkedStopCriteria])
-        print()
-
+        # Dados para a rede neural
         inputs, targets, input_size, output_size, n_hidden = self.trainingData
+
+        # Se o usuário escolheu um novo número de camadas ocultas, atualiza o valor
+        if n_hidden != self.hiddenLayersInput.value():
+            n_hidden = self.hiddenLayersInput.value()
+
+        stopCriteria = stopCriterias[checkedStopCriteria]
+        transFunction = transFunctions[checkedTransFunction]
+
+        # Cria a rede neural
+        self.nn = NeuralNetwork(inputs, targets, input_size, output_size, n_hidden, stopCriteria, transFunction)
+
+        # Pega o valor de treinamento de acordo com o critério escolhido pelo usuário
+        stopValue = (self.errMaxInput.value() if stopCriteria == 'error' else self.nItInput.value())
+
+        # Treina a rede neural
+        self.nn.train(stopValue)
+
+        # Avisa quando o treinamento acabar
+        QMessageBox.information(self, "Atenção!", "Treinamento concluído.")
+
+    # Criação da área de teste
+    def createTestArea(self):
+        group = QGroupBox("Teste")
+        layout = QVBoxLayout(group)
+
+        # Label pro arquivo de teste
+        self.testFileLabel = QLabel("Nenhum arquivo selecionado")
+        self.testFileLabel.setWordWrap(True)
+
+        # Botão para abrir o arquivo de teste
+        self.openTestFileButton = QPushButton("Abrir arquivo de teste")
+        self.openTestFileButton.clicked.connect(lambda: self.openFile("Abrir arquivo de teste"))
+
+        # Criando a tabela para a matriz de confusão
+        self.confusionMatrixTable = QTableWidget()
+
+        # Criando o botão para iniciar o teste
+        self.startTestButton = QPushButton("Testar")
+        self.startTestButton.clicked.connect(self.test)
+
+        # Adicionando os componentes ao layout
+        layout.addWidget(self.testFileLabel)
+        layout.addWidget(self.openTestFileButton)
+        layout.addWidget(self.confusionMatrixTable)
+        layout.addWidget(self.startTestButton)
+
+        # Retornando
+        self.centralLayout.addWidget(group)
+
+    def test(self):
+        if(not hasattr(self, 'nn')):
+            QMessageBox.critical(self, "Erro!", "A rede não está treinada.")
+            return
+
+        if(not hasattr(self, 'testFilePath')):
+            QMessageBox.critical(self, "Erro!", "Nenhum arquivo de teste selecionado.")
+            return
+
+        cm = self.nn.test(self.testFilePath)
+
+        # Atualizando a tabela
+        self.confusionMatrixTable.setRowCount(cm.shape[0])
+        self.confusionMatrixTable.setColumnCount(cm.shape[1])
+        self.confusionMatrixTable.setHorizontalHeaderLabels([str(i + 1) for i in range(cm.shape[1])])
+        self.confusionMatrixTable.setVerticalHeaderLabels([str(i + 1) for i in range(cm.shape[0])])
+
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                self.confusionMatrixTable.setItem(i, j, QTableWidgetItem(str(cm[i, j])))

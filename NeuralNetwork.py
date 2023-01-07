@@ -10,7 +10,7 @@ np.random.seed(SEED)
 class NeuralNetwork:
     def __init__(self, inputs, targets, input_size, output_size, n_hidden, stop_criteria = 'epochs', act_func = 'tanh'):
         self.inputs = inputs
-        self.targets = prepare_targets(targets, act_func)
+        self.targets = prepare_targets(targets, act_func, output_size)
         self.input_size = input_size
         self.output_size = output_size
         self.n_hidden_layers = n_hidden
