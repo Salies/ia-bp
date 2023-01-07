@@ -8,23 +8,16 @@ SEED = 666
 np.random.seed(SEED)
 
 class NeuralNetwork:
-    def __init__(self, data_path, stop_criteria = 'epochs', act_func = 'tanh', n_hidden = None):
-        data = pd.read_csv(data_path)
-        # Embaralha os dados para que o treinamento seja mais eficiente.
-        data = data.sample(frac=1, random_state=SEED).reset_index(drop=True)
-        # A última coluna é o target
-        self.targets = data.iloc[:, -1].values.astype(int)
-        self.output_size = len(np.unique(self.targets))
-        self.targets = prepare_targets(self.targets, act_func)
-        self.inputs = data.iloc[:, :-1].values
-        self.input_size = self.inputs.shape[1]
+    def __init__(self, inputs, targets, input_size, output_size, n_hidden, stop_criteria = 'epochs', act_func = 'tanh'):
+        self.inputs = inputs
+        self.targets = prepare_targets(targets, act_func)
+        self.input_size = input_size
+        self.output_size = output_size
         self.n_hidden_layers = n_hidden
-        if self.n_hidden_layers is None:
-            self.n_hidden_layers = int(np.sqrt(self.input_size*self.output_size))
+        self.stop_criteria = stop_criteria
+
         self.weights1 = np.random.rand(self.input_size, self.n_hidden_layers)
         self.weights2 = np.random.rand(self.n_hidden_layers, self.output_size)
-
-        self.stop_criteria = stop_criteria
 
         if act_func == 'tanh':
             self.act_func = tanh
@@ -67,3 +60,8 @@ class NeuralNetwork:
         predictions = np.argmax(predictions, axis=1) + 1
         cm = confusion_matrix(targets, predictions)
         return cm
+
+    # Outras funções requeridas pelo enunciado.
+    # "O programa deve indicar o número de neurônios na camada de entrada (6) e saída (5)"
+    def get_neurons_sizes(self):
+        return self.input_size, self.output_size
