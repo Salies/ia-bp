@@ -85,38 +85,20 @@ class MultiClassClassificationNetwork:
             self.forward(self.inputs)
             self.backward()
 
-#classifier = MultiClassClassificationNetwork(6, 5)
+    def test(self, data_path):
+        data = pd.read_csv(data_path)
+        # A última coluna é o target
+        targets = data.iloc[:, -1].values
+        inputs = data.iloc[:, :-1].values
+        predictions = self.forward(inputs)
+        predictions = np.argmax(predictions, axis=1) + 1
+        cm = confusion_matrix(targets, predictions)
+        return cm
 
 classifier = MultiClassClassificationNetwork()
-
-'''# Loading training data
-data = pd.read_csv('data/treinamento.csv')
-# Shuffling the data
-data = data.sample(frac=1, random_state=666).reset_index(drop=True)
-# The last column is the target
-X = data.iloc[:, :-1].values
-y_data = data.iloc[:, -1].values.astype(int)
-
-y = prepare_targets(y_data)
-
-# Training the model
-classifier.train(X, y, 1000)'''
 
 classifier.set_data('data/treinamento.csv')
 classifier.train(1000)
 
-# Loading test data
-data = pd.read_csv('data/teste.csv')
-# The last column is the target
-X_test = data.iloc[:, :-1].values
-y_test = data.iloc[:, -1].values
-
-# Predicting the test set results
-y_pred = classifier.forward(X_test)
-
-pred = np.argmax(y_pred, axis=1) + 1
-
-# Making the Confusion Matrix
-cm = confusion_matrix(y_test, pred)
-
+cm = classifier.test('data/teste.csv')
 print(cm)
