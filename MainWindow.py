@@ -1,9 +1,7 @@
-# PySide6 main window example
-
-import sys
 from PySide6.QtWidgets import QMessageBox, QVBoxLayout, QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, QRadioButton, QDoubleSpinBox, QGridLayout
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import QUrl
+from data_utils import import_data
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -31,9 +29,8 @@ class MainWindow(QMainWindow):
         self.trainingFileLabel = QLabel("Nenhum arquivo selecionado")
 
         # Label para indicar o número de neurônios na camada de entrada e saída
-        inputNeuronsTxt = "A camada de <u>entrada</u> possui <b>0</b> neurônios."
-        outputNeuronsTxt = "A camada de <u>saída</u> possui <b>0</b> neurônios."
-        self.neuronsLabel = QLabel("%s<br/>%s " % (inputNeuronsTxt, outputNeuronsTxt))
+        self.neuronsLabel = QLabel()
+        self.updateNeuronCount(0, 0)
 
         # Seleção do número de camadas ocultas
         hiddenLayersLayout = QHBoxLayout()
@@ -100,6 +97,11 @@ class MainWindow(QMainWindow):
         # Retornando
         self.centralLayout.addWidget(self.trainingParametersGroup)
 
+    def updateNeuronCount(self, inputNeurons, outputNeurons):
+        inputNeuronsTxt = "A camada de <u>entrada</u> possui <b>{}</b> neurônios.".format(inputNeurons)
+        outputNeuronsTxt = "A camada de <u>saída</u> possui <b>{}</b> neurônios.".format(outputNeurons)
+        self.neuronsLabel.setText("{}<br/>{}".format(inputNeuronsTxt, outputNeuronsTxt))
+
     def openFile(self, title):
         # Abrindo o arquivo de treinamento
         file = QFileDialog.getOpenFileName(self, title, "", "Arquivos (*.csv)")
@@ -112,13 +114,15 @@ class MainWindow(QMainWindow):
         fileName = QUrl(file[0]).fileName()
 
         if title == "Abrir arquivo de treinamento":
-            self.trainingFile = file
+            self.trainingData = import_data(file[0])
             self.trainingFileLabel.setText(fileName)
+            self.updateNeuronCount(self.trainingData[2], self.trainingData[3])
+            self.hiddenLayersInput.setValue(self.trainingData[4])
             return
 
     def startTraining(self):
-        if(not hasattr(self, 'trainingFile') or self.trainingFile == ""):
-            QMessageBox.critical(self, "Erro", "Nenhum arquivo de treinamento selecionado.")
+        if(not hasattr(self, 'trainingData')):
+            QMessageBox.critical(self, "Erro!", "Nenhum arquivo de treinamento selecionado.")
             return
 
         transFunction = ['logistic', 'tanh']
@@ -132,3 +136,5 @@ class MainWindow(QMainWindow):
         print(transFunction[checkedTransFunction])
         print(stopCriteria[checkedStopCriteria])
         print()
+
+        inputs, targets, input_size, output_size, n_hidden = self.trainingData
