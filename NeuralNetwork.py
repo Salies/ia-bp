@@ -1,27 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
-# Usando a função logística do scipy pois se eu tentar
-# fazer na mão, dá overflow.
-from scipy.special import expit
-
-SEED = 666
-
-def tanh(x):
-  return np.tanh(x)
-
-def tanh_derivative(x):
-  return 1 - np.tanh(x)**2
-
-def logistic(x):
-  return expit(x)
-
-def logistic_derivative(x):
-  return logistic(x) * (1 - logistic(x))
-
-# Error function is half squared error
-def error_function(targets, outputs):
-    return np.sum((targets - outputs)**2) / 2
+from utils import *
 
 # Prepara the targets for the neural network
 # The logic is: if the target is 1, the output should be [1, 0, 0, 0, 0]
@@ -39,6 +19,8 @@ def prepare_targets(targets, act_func):
     if act_func == 'tanh':
         targets_matrix[targets_matrix == 0] = -1
     return targets_matrix
+
+SEED = 666
 
 np.random.seed(SEED)
 
