@@ -18,18 +18,18 @@ def logistic(x):
 
 def logistic_derivative(x):
   return logistic(x) * (1 - logistic(x))
-act_func_s = 'logistic'
+'''act_func_s = 'logistic'
 
 if act_func_s == 'tanh':
   act_func = tanh
   act_func_derivative = tanh_derivative
 elif act_func_s == 'logistic':
   act_func = logistic
-  act_func_derivative = logistic_derivative
+  act_func_derivative = logistic_derivative'''
 
 # Prepara the targets for the neural network
 # The logic is: if the target is 1, the output should be [1, 0, 0, 0, 0]
-def prepare_targets(targets):
+def prepare_targets(targets, act_func):
     n = targets.shape[0]
     # Doing this in a smarth way
     # First, we create a matrix with the same number of rows as the targets, but with 5 columns
@@ -40,21 +40,21 @@ def prepare_targets(targets):
     # The targets are 1-indexed, so we need to subtract 1 to get the correct column
     targets_matrix[np.arange(n), targets - 1] = 1
     # If the activation function is tanh, we need to change the 0s to -1s
-    if act_func_s == 'tanh':
+    if act_func == 'tanh':
         targets_matrix[targets_matrix == 0] = -1
     return targets_matrix
 
 np.random.seed(SEED)
 
 class MultiClassClassificationNetwork:
-    def __init__(self, data_path, n_hidden = None):
+    def __init__(self, data_path, act_func = 'tanh', n_hidden = None):
         data = pd.read_csv(data_path)
         # Embaralha os dados para que o treinamento seja mais eficiente.
         data = data.sample(frac=1, random_state=SEED).reset_index(drop=True)
         # A última coluna é o target
         self.targets = data.iloc[:, -1].values.astype(int)
         self.output_size = len(np.unique(self.targets))
-        self.targets = prepare_targets(self.targets)
+        self.targets = prepare_targets(self.targets, act_func)
         self.inputs = data.iloc[:, :-1].values
         self.input_size = self.inputs.shape[1]
         self.hidden_layers = n_hidden
@@ -63,16 +63,23 @@ class MultiClassClassificationNetwork:
         self.weights1 = np.random.rand(self.input_size, self.hidden_layers)
         self.weights2 = np.random.rand(self.hidden_layers, self.output_size)
 
+        if act_func == 'tanh':
+            self.act_func = tanh
+            self.act_func_derivative = tanh_derivative
+        elif act_func == 'logistic':
+            self.act_func = logistic
+            self.act_func_derivative = logistic_derivative
+
     def forward(self, inputs):
-        self.hidden_layer = act_func(np.dot(inputs, self.weights1))
-        self.output = act_func(np.dot(self.hidden_layer, self.weights2))
+        self.hidden_layer = self.act_func(np.dot(inputs, self.weights1))
+        self.output = self.act_func(np.dot(self.hidden_layer, self.weights2))
         return self.output
 
     def backward(self):
         self.errors = self.targets - self.output
-        self.output_deltas = self.errors * act_func_derivative(self.output)
+        self.output_deltas = self.errors * self.act_func_derivative(self.output)
         self.errors_hidden = self.output_deltas.dot(self.weights2.T)
-        self.hidden_deltas = self.errors_hidden * act_func_derivative(self.hidden_layer)
+        self.hidden_deltas = self.errors_hidden * self.act_func_derivative(self.hidden_layer)
         self.weights2 += self.hidden_layer.T.dot(self.output_deltas)
         self.weights1 += self.inputs.T.dot(self.hidden_deltas)
 
