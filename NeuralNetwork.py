@@ -14,7 +14,6 @@ def logistic(x):
 
 def logistic_derivative(x):
   return logistic(x) * (1 - logistic(x))
-
 act_func_s = 'logistic'
 
 if act_func_s == 'tanh':
@@ -23,6 +22,23 @@ if act_func_s == 'tanh':
 elif act_func_s == 'logistic':
   act_func = logistic
   act_func_derivative = logistic_derivative
+
+# Prepara the targets for the neural network
+# The logic is: if the target is 1, the output should be [1, 0, 0, 0, 0]
+def prepare_targets(targets):
+    n = targets.shape[0]
+    # Doing this in a smarth way
+    # First, we create a matrix with the same number of rows as the targets, but with 5 columns
+    # Then, we fill the matrix with 0
+    # Finally, we replace the column that corresponds to the target with 1
+    # For example, if the target is 3, we replace the 3rd column with 1, etc.
+    targets_matrix = np.zeros((n, 5))
+    # The targets are 1-indexed, so we need to subtract 1 to get the correct column
+    targets_matrix[np.arange(n), targets - 1] = 1
+    # If the activation function is tanh, we need to change the 0s to -1s
+    if act_func_s == 'tanh':
+        targets_matrix[targets_matrix == 0] = -1
+    return targets_matrix
 
 np.random.seed(666)
 
@@ -61,36 +77,9 @@ data = pd.read_csv('data/treinamento.csv')
 data = data.sample(frac=1, random_state=666).reset_index(drop=True)
 # The last column is the target
 X = data.iloc[:, :-1].values
-y_data = data.iloc[:, -1].values
-y = []
-# The logic is: if the target is 1, the output should be [1, -1, -1, -1, -1]
-# if the target is 2, the output should be [-1, 1, -1, -1, -1], etc.
-if act_func_s == 'tanh':
-  for i in range(len(y_data)):
-    if y_data[i] == 1:
-        y.append([1, -1, -1, -1, -1])
-    elif y_data[i] == 2:
-        y.append([-1, 1, -1, -1, -1])
-    elif y_data[i] == 3:
-        y.append([-1, -1, 1, -1, -1])
-    elif y_data[i] == 4:
-        y.append([-1, -1, -1, 1, -1])
-    elif y_data[i] == 5:
-        y.append([-1, -1, -1, -1, 1])
-elif act_func_s == 'logistic':
-  for i in range(len(y_data)):
-    if y_data[i] == 1:
-        y.append([1, 0, 0, 0, 0])
-    elif y_data[i] == 2:
-        y.append([0, 1, 0, 0, 0])
-    elif y_data[i] == 3:
-        y.append([0, 0, 1, 0, 0])
-    elif y_data[i] == 4:
-        y.append([0, 0, 0, 1, 0])
-    elif y_data[i] == 5:
-        y.append([0, 0, 0, 0, 1])
+y_data = data.iloc[:, -1].values.astype(int)
 
-y = np.array(y)
+y = prepare_targets(y_data)
 
 # Training the model
 classifier.train(X, y, 1000)
