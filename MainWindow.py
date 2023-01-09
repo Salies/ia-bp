@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
         self.nItInput = QSpinBox()
         self.nItInput.setMinimum(0)
         self.nItInput.setMaximum(100000)
-        self.nItInput.setValue(1000)
+        self.nItInput.setValue(150)
 
         trainingLayout.addWidget(errMaxRadio, 0, 0)
         trainingLayout.addWidget(self.errMaxInput, 0, 1)

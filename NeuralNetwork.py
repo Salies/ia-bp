@@ -3,12 +3,9 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix
 from utils import *
 
-SEED = 666
-
-np.random.seed(SEED)
-
 class NeuralNetwork:
     def __init__(self, inputs, targets, input_size, output_size, n_hidden, stop_criteria = 'epochs', act_func = 'tanh'):
+        np.random.seed(666)
         self.inputs = inputs
         self.targets = prepare_targets(targets, act_func, output_size)
         self.input_size = input_size
