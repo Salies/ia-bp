@@ -57,8 +57,3 @@ class NeuralNetwork:
         predictions = np.argmax(predictions, axis=1) + 1
         cm = confusion_matrix(targets, predictions)
         return cm
-
-    # Outras funções requeridas pelo enunciado.
-    # "O programa deve indicar o número de neurônios na camada de entrada (6) e saída (5)"
-    def get_neurons_sizes(self):
-        return self.input_size, self.output_size
