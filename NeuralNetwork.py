@@ -28,8 +28,8 @@ class NeuralNetwork:
         self.output = self.act_func(np.dot(self.hidden_layers, self.weights2))
         return self.output
 
-    def __backward(self):
-        self.errors = self.targets - self.output
+    def __backward(self, targets):
+        self.errors = targets - self.output
         self.output_deltas = self.errors * self.act_func_derivative(self.output)
         self.errors_hidden = self.output_deltas.dot(self.weights2.T)
         self.hidden_deltas = self.errors_hidden * self.act_func_derivative(self.hidden_layers)
@@ -40,12 +40,12 @@ class NeuralNetwork:
         if self.stop_criteria == 'epochs':
             for _ in range(stop_value):
                 self.forward(self.inputs)
-                self.__backward()
+                self.__backward(self.targets)
         elif self.stop_criteria == 'error':
             error = error_function(self.targets, self.forward(self.inputs))
             while error > stop_value:
                 self.forward(self.inputs)
-                self.__backward()
+                self.__backward(self.targets)
                 error = error_function(self.targets, self.output)
 
     def test(self, data_path):

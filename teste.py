@@ -15,13 +15,17 @@ def prepare_targets(targets, act_func, n_outputs):
     # If the activation function is tanh, we need to change the 0s to -1s
     if act_func == 'tanh':
         targets_matrix[targets_matrix == 0] = -1
-    return targets_matrix.astype(int)
+
+    return targets_matrix.reshape(n, n_outputs).astype(int)
 
 def tanh(x):
   return np.tanh(x)
 
 def tanh_derivative(x):
   return 1 - np.tanh(x)**2
+
+act = tanh
+act_derivative = tanh_derivative
 
 class MultiClassClassificationNetwork:
   def __init__(self, input_size, output_size):
@@ -34,29 +38,28 @@ class MultiClassClassificationNetwork:
 
   def forward(self, inputs):
     self.inputs = inputs
-    self.hidden_layer = tanh(np.dot(inputs, self.weights1))
-    self.output = tanh(np.dot(self.hidden_layer, self.weights2))
+    net_hidden = inputs @ self.weights1
+    self.hidden_layer = act(net_hidden)
+    net_output = self.hidden_layer @ self.weights2
+    self.output = act(net_output)
     return self.output
 
   def backward(self, targets):
     self.errors = targets - self.output
-    self.output_deltas = self.errors * tanh_derivative(self.output)
-    self.errors_hidden = self.output_deltas.dot(self.weights2.T)
-    self.hidden_deltas = self.errors_hidden * tanh_derivative(self.hidden_layer)
-    self.weights2 += self.hidden_layer.T.dot(self.output_deltas)
-    self.weights1 += self.inputs.T.dot(self.hidden_deltas)
+    self.output_deltas = self.errors * act_derivative(self.output)
+    self.errors_hidden = self.output_deltas @ self.weights2.T
+    self.hidden_deltas = self.errors_hidden * act_derivative(self.hidden_layer)
+    self.weights2 += self.hidden_layer.T @ self.output_deltas
+    self.weights1 += self.inputs.T @ self.hidden_deltas
     #print(self.errors)
 
   def train(self, inputs, targets, epochs):
     # For each input and each target
+    data = list(zip(inputs, targets))
     for _ in range(epochs):
-        for input, target in zip(inputs, targets):
-            i = [input]
-            t = [target]
-            i = np.array(i)
-            t = np.array(t)
-            self.forward(i)
-            self.backward(t)
+        for input, target in data:
+            self.forward(input)
+            self.backward(target)
 
 classifier = MultiClassClassificationNetwork(6, 5)
 
@@ -69,6 +72,8 @@ targets = data.iloc[:, -1].values
 inputs = data.iloc[:, :-1].values
 
 targets = prepare_targets(targets, 'tanh', 5)
+
+inputs = np.array([[i] for i in inputs])
 
 classifier.train(inputs, targets, 250)
 
