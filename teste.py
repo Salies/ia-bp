@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
+from scipy.special import expit as logistic_a
 
 def prepare_targets(targets, act_func, n_outputs):
     n = targets.shape[0]
@@ -24,8 +25,21 @@ def tanh(x):
 def tanh_derivative(x):
   return 1 - np.tanh(x)**2
 
-act = tanh
-act_derivative = tanh_derivative
+def logistic(x):
+  return logistic_a(x) - 0.5
+
+def logistic_derivative(x):
+  return (logistic_a(x) * (1 - logistic_a(x))) - 0.5
+
+def softmax(x):
+  e_x = np.exp(x - np.max(x))
+  return e_x / e_x.sum(axis=0)
+
+def softmax_derivative(x):
+  return softmax(x) * (1 - softmax(x))
+
+act = softmax
+act_derivative = softmax_derivative
 
 class MultiClassClassificationNetwork:
   def __init__(self, input_size, output_size):
@@ -51,7 +65,6 @@ class MultiClassClassificationNetwork:
     self.hidden_deltas = self.errors_hidden * act_derivative(self.hidden_layer)
     self.weights2 += self.hidden_layer.T @ self.output_deltas
     self.weights1 += self.inputs.T @ self.hidden_deltas
-    #print(self.errors)
 
   def train(self, inputs, targets, epochs):
     # For each input and each target
@@ -64,6 +77,7 @@ class MultiClassClassificationNetwork:
 classifier = MultiClassClassificationNetwork(6, 5)
 
 data = pd.read_csv('data/treinamento.csv')
+data = data.sample(frac=1, random_state=666).reset_index(drop=True)
 
 # the last column is the target
 targets = data.iloc[:, -1].values
@@ -71,11 +85,11 @@ targets = data.iloc[:, -1].values
 # the other columns are the inputs
 inputs = data.iloc[:, :-1].values
 
-targets = prepare_targets(targets, 'tanh', 5)
+targets = prepare_targets(targets, act.__name__, 5)
 
 inputs = np.array([[i] for i in inputs])
 
-classifier.train(inputs, targets, 250)
+classifier.train(inputs, targets, 400)
 
 # testing
 

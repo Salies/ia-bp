@@ -37,16 +37,20 @@ class NeuralNetwork:
         self.weights1 += self.inputs.T.dot(self.hidden_deltas)
 
     def train(self, stop_value):
+        inputs = [self.inputs]
+        targets = [self.targets]
         if self.stop_criteria == 'epochs':
             for _ in range(stop_value):
-                self.forward(self.inputs)
-                self.__backward(self.targets)
+                for input, target in zip(inputs, targets):
+                    self.forward(input)
+                    self.__backward(target)
         elif self.stop_criteria == 'error':
             error = error_function(self.targets, self.forward(self.inputs))
             while error > stop_value:
-                self.forward(self.inputs)
-                self.__backward(self.targets)
-                error = error_function(self.targets, self.output)
+                for input, target in zip(inputs, targets):
+                    self.forward(input)
+                    self.__backward(target)
+                    error = error_function(target, self.output)
 
     def test(self, data_path):
         data = pd.read_csv(data_path)
