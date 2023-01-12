@@ -26,10 +26,10 @@ def tanh_derivative(x):
   return 1 - np.tanh(x)**2
 
 def logistic(x):
-  return logistic_a(x) - 0.5
+  return np.exp(-np.logaddexp(0, -x)) * 2 - 1
 
 def logistic_derivative(x):
-  return (logistic_a(x) * (1 - logistic_a(x))) - 0.5
+  return logistic_a(x) * (1 - logistic_a(x))
 
 def softmax(x):
   e_x = np.exp(x - np.max(x))
@@ -38,17 +38,21 @@ def softmax(x):
 def softmax_derivative(x):
   return softmax(x) * (1 - softmax(x))
 
-act = softmax
-act_derivative = softmax_derivative
+act = logistic
+act_derivative = logistic_derivative
 
 class MultiClassClassificationNetwork:
   def __init__(self, input_size, output_size):
+    #np.random.seed(42)
+    #np.random.seed(11092001)
     np.random.seed(666)
     self.input_size = input_size
     self.output_size = output_size
     self.hidden_layers = int(np.sqrt(input_size * output_size))
-    self.weights1 = np.random.rand(self.input_size, self.hidden_layers)
-    self.weights2 = np.random.rand(self.hidden_layers, self.output_size)
+    #self.weights1 = np.random.rand(self.input_size, self.hidden_layers)
+    #self.weights2 = np.random.rand(self.hidden_layers, self.output_size)
+    self.weights1 = np.random.uniform(-0.01, 0.01, (self.input_size, self.hidden_layers))
+    self.weights2 = np.random.uniform(-0.01, 0.01, (self.hidden_layers, self.output_size))
 
   def forward(self, inputs):
     self.inputs = inputs
@@ -89,7 +93,12 @@ targets = prepare_targets(targets, act.__name__, 5)
 
 inputs = np.array([[i] for i in inputs])
 
-classifier.train(inputs, targets, 400)
+# normalize the inputs to be between 0 and 1
+inputs = (inputs - inputs.min()) / (inputs.max() - inputs.min())
+
+# tanh = 80
+# logistic = 40
+classifier.train(inputs, targets, 40)
 
 # testing
 
