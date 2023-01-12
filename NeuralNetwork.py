@@ -24,17 +24,19 @@ class NeuralNetwork:
             self.act_func_derivative = logistic_derivative
 
     def forward(self, inputs):
-        self.hidden_layers = self.act_func(np.dot(inputs, self.weights1))
-        self.output = self.act_func(np.dot(self.hidden_layers, self.weights2))
+        net_hidden = inputs @ self.weights1
+        self.hidden_layers = self.act_func(net_hidden)
+        net_output = self.hidden_layers @ self.weights2
+        self.output = self.act_func(net_output)
         return self.output
 
     def __backward(self, targets):
         self.errors = targets - self.output
         self.output_deltas = self.errors * self.act_func_derivative(self.output)
-        self.errors_hidden = self.output_deltas.dot(self.weights2.T)
+        self.errors_hidden = self.output_deltas @ self.weights2.T
         self.hidden_deltas = self.errors_hidden * self.act_func_derivative(self.hidden_layers)
-        self.weights2 += self.hidden_layers.T.dot(self.output_deltas)
-        self.weights1 += self.inputs.T.dot(self.hidden_deltas)
+        self.weights2 += self.hidden_layers.T @ self.output_deltas
+        self.weights1 += self.inputs.T @ self.hidden_deltas
 
     def train(self, stop_value):
         inputs = [self.inputs]
