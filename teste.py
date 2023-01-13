@@ -14,8 +14,7 @@ def prepare_targets(targets, act_func, n_outputs):
     # The targets are 1-indexed, so we need to subtract 1 to get the correct column
     targets_matrix[np.arange(n), targets - 1] = 1
     # If the activation function is tanh, we need to change the 0s to -1s
-    if act_func == 'tanh':
-        targets_matrix[targets_matrix == 0] = -1
+    targets_matrix[targets_matrix == 0] = -1
 
     return targets_matrix.reshape(n, n_outputs).astype(int)
 
@@ -26,10 +25,11 @@ def tanh_derivative(x):
   return 1 - np.tanh(x)**2
 
 def logistic(x):
-  return np.exp(-np.logaddexp(0, -x)) * 2 - 1
+  return np.exp(-np.logaddexp(-x, 0)) * 2 - 1
 
 def logistic_derivative(x):
-  return logistic_a(x) * (1 - logistic_a(x))
+  sigmoid = logistic(x)
+  return 0.5 * (1 + sigmoid) * (1 - sigmoid)
 
 def softmax(x):
   e_x = np.exp(x - np.max(x))
@@ -98,7 +98,7 @@ inputs = (inputs - inputs.min()) / (inputs.max() - inputs.min())
 
 # tanh = 80
 # logistic = 40
-classifier.train(inputs, targets, 40)
+classifier.train(inputs, targets, 80)
 
 # testing
 
