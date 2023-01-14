@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QPushButton, QGroupBox, QWidget, QHBoxLayout, QLabel, QSpinBox, QFileDialog, 
     QRadioButton, QDoubleSpinBox, QGridLayout
 )
-from PySide6.QtGui import QIcon, QFont
+from PySide6.QtGui import QIcon
 from PySide6.QtCore import QUrl
 from data_utils import import_data
 from NeuralNetwork import NeuralNetwork
@@ -29,7 +29,6 @@ class MainWindow(QMainWindow):
 
         # Botão para abrir o arquivo de treinamento
         self.openTrainingFileButton = QPushButton("Abrir arquivo de treinamento")
-        # Pass text "Abrir arquivo de treinamento" to openFile function
         self.openTrainingFileButton.clicked.connect(lambda: self.openFile("Abrir arquivo de treinamento"))
 
         # Label informando o arquivo selecionado
@@ -137,7 +136,7 @@ class MainWindow(QMainWindow):
             return
 
         transFunctions = ['logistic', 'tanh']
-        stopCriterias = ['error', 'epochs']
+        stopCriterias = ['error', 'itr']
 
         # Pega a função e o critério de parada selecionados
         checkedTransFunction = [button.isChecked() for button in self.trainingTransFunctionGroup.findChildren(QRadioButton)].index(True)
