@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
 
         # Seleção do número de camadas ocultas
         hiddenLayersLayout = QHBoxLayout()
-        hiddenLayersLabel = QLabel("Número de camadas ocultas:")
+        hiddenLayersLabel = QLabel("Número de neurônios na camada oculta:")
         self.hiddenLayersInput = QSpinBox()
         self.hiddenLayersInput.setMinimum(0)
         self.hiddenLayersInput.setMaximum(1000)
