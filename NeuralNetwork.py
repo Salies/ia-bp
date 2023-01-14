@@ -42,18 +42,26 @@ class NeuralNetwork:
         self.weights1 += np.vstack(inputs) @ np.reshape(self.hidden_deltas, (-1, self.hidden_deltas.shape[0]))
 
     def train(self, stop_value):
+        train_data = list(zip(self.inputs, self.targets))
+        train_data_size = len(train_data)
         if self.stop_criteria == 'epochs':
-            for _ in range(stop_value):
-                for input, target in zip(self.inputs, self.targets):
-                    self.forward(input)
-                    self.__backward(input, target)
+            for itr in range(stop_value):
+                input, target = train_data[itr % train_data_size]
+                self.forward(input)
+                self.__backward(input, target)
+            # for _ in range(stop_value):
+            #     for input, target in zip(self.inputs, self.targets):
+            #         self.forward(input)
+            #         self.__backward(input, target)
         elif self.stop_criteria == 'error':
             error = error_function(self.targets, self.forward(self.inputs))
+            itr = 0
             while error > stop_value:
-                for input, target in zip(self.inputs, self.targets):
-                    self.forward(input)
-                    self.__backward(input, target)
-                    error = error_function(target, self.output)
+                input, target = train_data[itr % train_data_size]
+                self.forward(input)
+                self.__backward(input, target)
+                error = error_function(self.targets, self.forward(self.inputs))
+                itr += 1
 
     def test(self, data_path):
         data = pd.read_csv(data_path)
