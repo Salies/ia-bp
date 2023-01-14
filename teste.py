@@ -31,13 +31,6 @@ def logistic_derivative(x):
   sigmoid = logistic(x)
   return 0.5 * (1 + sigmoid) * (1 - sigmoid)
 
-def softmax(x):
-  e_x = np.exp(x - np.max(x))
-  return e_x / e_x.sum(axis=0)
-
-def softmax_derivative(x):
-  return softmax(x) * (1 - softmax(x))
-
 act = logistic
 act_derivative = logistic_derivative
 
@@ -98,15 +91,19 @@ inputs = (inputs - inputs.min()) / (inputs.max() - inputs.min())
 
 # tanh = 80
 # logistic = 40
-classifier.train(inputs, targets, 80)
+classifier.train(inputs, targets, 5)
 
 # testing
 
 test_data = pd.read_csv('data/teste.csv')
 # the other columns are the inputs
 test_inputs = test_data.iloc[:, :-1].values
+#test_inputs = np.array([[i] for i in test_inputs])
+# normalize the inputs to be between 0 and 1
+test_inputs = (test_inputs - test_inputs.min()) / (test_inputs.max() - test_inputs.min())
 
 classifier.forward(test_inputs)
+print(classifier.output)
 preds = np.argmax(classifier.output, axis=1) + 1
 cm = confusion_matrix(test_data.iloc[:, -1].values, preds)
 print(cm)
