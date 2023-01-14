@@ -8,7 +8,7 @@ class NeuralNetwork:
         np.random.seed(666)
         inputs = (inputs - inputs.min()) / (inputs.max() - inputs.min())
         self.inputs = inputs
-        self.targets = prepare_targets(targets, act_func, output_size)
+        self.targets = prepare_targets(targets, output_size)
         self.input_size = input_size
         self.output_size = output_size
         self.n_hidden_layers = n_hidden
@@ -52,14 +52,15 @@ class NeuralNetwork:
             while error > stop_value:
                 for input, target in zip(self.inputs, self.targets):
                     self.forward(input)
-                    self.__backward(target)
+                    self.__backward(input, target)
                     error = error_function(target, self.output)
 
     def test(self, data_path):
         data = pd.read_csv(data_path)
         # A última coluna é o target
-        targets = prepare_targets(data.iloc[:, -1].values)
+        targets = data.iloc[:, -1].values
         inputs = data.iloc[:, :-1].values
+        inputs = (inputs - inputs.min()) / (inputs.max() - inputs.min())
         predictions = self.forward(inputs)
         predictions = np.argmax(predictions, axis=1) + 1
         cm = confusion_matrix(targets, predictions)
