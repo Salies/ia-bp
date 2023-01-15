@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
 
         self.errMaxInput = QDoubleSpinBox()
         self.errMaxInput.setMinimum(0.0)
-        self.errMaxInput.setMaximum(100.0)
+        self.errMaxInput.setMaximum(10000.0)
         self.errMaxInput.setValue(0.01)
 
         self.nItInput = QSpinBox()
